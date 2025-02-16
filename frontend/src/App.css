@@ -178,3 +178,35 @@ button:disabled {
 .upload-btn:hover {
   background-color: #218838;
 }
+
+/* Summary Box */
+.summary-box {
+  margin-top: 20px;
+  padding: 15px;
+  background: #fff3cd;
+  border-left: 5px solid #ffc107;
+  font-size: 16px;
+  text-align: left;
+  border-radius: 8px;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* Send Button */
+.send-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 12px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.send-btn:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+}

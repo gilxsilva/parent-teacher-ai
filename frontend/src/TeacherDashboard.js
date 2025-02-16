@@ -7,10 +7,10 @@ function TeacherDashboard() {
   const [loading, setLoading] = useState(false);
   const [parentName, setParentName] = useState("");
   const [emailSubject, setEmailSubject] = useState("Student Progress Update");
-  const [file, setFile] = useState(null);
-  const [uploadResult, setUploadResult] = useState("");
+  const [generated, setGenerated] = useState(false); // Track if feedback has been generated
 
-  const handleSubmit = async (event) => {
+  // 📌 Generate AI Summary (DOES NOT SEND TO PARENT)
+  const handleGenerate = async (event) => {
     event.preventDefault();
     setLoading(true);
     setSummary("");
@@ -24,6 +24,7 @@ function TeacherDashboard() {
 
       const data = await response.json();
       setSummary(data.summary || "Error generating summary.");
+      setGenerated(true); // Allow review before sending
     } catch (error) {
       console.error("Error:", error);
       setSummary("Failed to connect to the backend.");
@@ -32,41 +33,40 @@ function TeacherDashboard() {
     setLoading(false);
   };
 
-  const handleFileUpload = async (event) => {
-    event.preventDefault();
-
-    if (!file) {
-      alert("Please select a CSV file.");
+  // 📌 Send Finalized Feedback to Parent (ONLY When Teacher Clicks)
+  const handleSendToParent = async () => {
+    if (!summary.trim()) {
+      alert("Please generate and review the feedback before sending.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      const response = await fetch("http://127.0.0.1:5000/bulk-upload", {
+      const response = await fetch("http://127.0.0.1:5000/send-feedback", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parent_name: parentName, summary }),
       });
 
       const data = await response.json();
-      setUploadResult(data.message || "Upload successful!");
+      alert(data.message || "Feedback sent to parent successfully!");
+      setGenerated(false); // Reset UI after sending
     } catch (error) {
       console.error("Error:", error);
-      setUploadResult("Failed to upload file.");
+      alert("Failed to send feedback.");
     }
   };
 
   return (
     <div className="container">
-      <h2>🧑‍🏫 Teacher Dashboard</h2>
-      <form onSubmit={handleSubmit}>
+      <h2>👩‍🏫 Teacher Dashboard</h2>
+
+      {/* Feedback Form */}
+      <form onSubmit={handleGenerate} className="feedback-form">
         <input
           type="text"
           placeholder="Parent's Name"
           value={parentName}
           onChange={(e) => setParentName(e.target.value)}
-          className="input-field"
           required
         />
         <input
@@ -74,14 +74,13 @@ function TeacherDashboard() {
           placeholder="Email Subject"
           value={emailSubject}
           onChange={(e) => setEmailSubject(e.target.value)}
-          className="input-field"
           required
         />
         <textarea
+          rows="4"
           placeholder="Enter student performance details..."
           value={performanceText}
           onChange={(e) => setPerformanceText(e.target.value)}
-          className="input-field"
           required
         />
         <button type="submit" className="primary-btn" disabled={loading}>
@@ -89,12 +88,20 @@ function TeacherDashboard() {
         </button>
       </form>
 
-      <h2>📂 Bulk Upload Student Feedback</h2>
-      <form onSubmit={handleFileUpload}>
-        <input type="file" accept=".csv" onChange={(e) => setFile(e.target.files[0])} className="input-field" />
-        <button type="submit" className="upload-btn">Upload CSV</button>
-      </form>
-      {uploadResult && <p>{uploadResult}</p>}
+      {/* Editable Summary Section (Only Shows After Generation) */}
+      {generated && (
+        <div className="summary-box">
+          <h3>📄 Review & Edit Feedback</h3>
+          <textarea
+            rows="6"
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+          />
+          <button onClick={handleSendToParent} className="send-btn">
+            Send to Parent
+          </button>
+        </div>
+      )}
     </div>
   );
 }

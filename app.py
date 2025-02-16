@@ -28,26 +28,32 @@ class Message(db.Model):
 with app.app_context():
     db.create_all()
 
+# Route to send feedback to parent
+@app.route("/send-feedback", methods=["POST"])
+def send_feedback():
+    data = request.json
+    parent_name = data.get("parent_name", "Parent")
+    summary = data.get("summary", "")
+
+    # Store the feedback as finalized
+    new_message = Message(parent_name=parent_name, student_name="Student", summary=summary)
+    db.session.add(new_message)
+    db.session.commit()
+
+    return jsonify({"message": "Feedback sent successfully!"})
+
 # 📌 **Single Student Feedback Generation**
 @app.route("/generate-summary", methods=["POST"])
 def generate_summary():
     data = request.json
-    parent_name = data.get("parent_name", "Parent")
-    student_name = data.get("student_name", "Student")
     performance = data.get("performance", "")
+    
+    # Simulate AI summary generation
+    summary = f"It sounds like you're trying to convey that {performance}. If you need to expand on this, let me know!"
 
-    completion = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": performance}]
-    )
-
-    summary = completion.choices[0].message.content
-
-    new_message = Message(parent_name=parent_name, student_name=student_name, summary=summary)
-    db.session.add(new_message)
-    db.session.commit()
-
+    # DO NOT SAVE TO DATABASE HERE
     return jsonify({"summary": summary})
+@app.route("/generate-summary", methods=["POST"])
 
 # 📌 **Bulk Upload for Multiple Students**
 @app.route("/bulk-upload", methods=["POST"])
